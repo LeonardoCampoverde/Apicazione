@@ -2,9 +2,11 @@ package com.example.apicazione;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,16 +20,22 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
+
+
+    private ArrayList <CardItems> films;
+
 
     // creating variables for our edit text
     private EditText courseIDEdt;
@@ -38,19 +46,22 @@ public class MainActivity extends AppCompatActivity {
     // creating variable for card view and text views.
     private CardView courseCV;
     private TextView titolo, descrizione, durata;
+    ListView lista;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+         lista= findViewById(R.id.list_view);
+
+        CustomAdapter customAdapter = new CustomAdapter(
+                MainActivity.this, films
+        );
 
         // initializing all our variables.
-        titolo = findViewById(R.id.idTVCourseName);
-        descrizione = findViewById(R.id.idTVCourseDescription);
-        durata = findViewById(R.id.idTVCourseDuration);
         getCourseDetailsBtn = findViewById(R.id.idBtnGetCourse);
         courseIDEdt = findViewById(R.id.idEdtCourseId);
-        courseCV = findViewById(R.id.idCVCOurseItem);
+
 
         // adding click listener for our button.
         getCourseDetailsBtn.setOnClickListener(new View.OnClickListener() {
@@ -67,7 +78,16 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+    public void setAdapter(ArrayList<CardItems> list){
+        CustomAdapter c = new CustomAdapter(MainActivity.this,list);
+        lista.setAdapter(c);
+
+
+    }
+
     private void getCourseDetails(String titoloReq) {
+        Log.d("MIAO","COURSE DETAILS");
         InetAddress ip = null;
         try {
             ip = Inet4Address.getByName("192.168.0.153");
@@ -86,25 +106,60 @@ public class MainActivity extends AppCompatActivity {
         StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                Log.d("MIAO","RICHIESTA OTTENUTA RISPOSTA");
+                films = new ArrayList<CardItems>();
+                    int i =0;
+                    int length=0;
+                JSONObject fulljsonObject = null;
+
+
+
+
+
                 try {
-                    // on below line passing our response to json object.
-                    JSONObject jsonObject = new JSONObject(response);
-                    // on below line we are checking if the response is null or not.
-                    if (jsonObject.getString("titolo") == "null") {
-                        // displaying a toast message if we get error
-                        Toast.makeText(MainActivity.this, "FILM NON TROVATO", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // if we get the data then we are setting it in our text views in below line.
-                        titolo.setText("TITOLO: "+jsonObject.getString("titolo"));
-                        descrizione.setText("DESCRIZIONE: " +jsonObject.getString("descrizione"));
-                        durata.setText("DURATA: "+jsonObject.getString("durata")+" minuti");
-                        courseCV.setVisibility(View.VISIBLE);
-                    }
-                    // on below line we are displaying
-                    // a success toast message.
+                    //jsonObject= arr.getJSONObject(i);
+
+                    fulljsonObject = new JSONObject(response);
+                    length = fulljsonObject.length()-2;
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                do {
+                    Log.d("MIAO","ENTRATO DO WHILE ON RESPONSE");
+                        try {
+                            JSONObject jsonObject = fulljsonObject.getJSONObject(Integer.toString(i));
+
+                            // on below line passing our response to json object.
+
+
+                            Log.d("MIAO","SETTATA LENGTH: "+length);
+                            // on below line we are checking if the response is null or not.
+                            if (jsonObject.getString("titolo") == "null") {
+                                Log.d("MIAO","STRINGA TITOLO NULL");
+                                // displaying a toast message if we get error
+                                if(i==0)
+                                    Toast.makeText(MainActivity.this, "NESSUN FILM TROVATO", Toast.LENGTH_SHORT).show();
+                            } else {
+
+                                // if we get the data then we are setting it in our text views in below line.
+                                String stringaTitolo = "TITOLO: " + jsonObject.getString("titolo");
+                                String stringaDescrizione ="DESCRIZIONE: " + jsonObject.getString("descrizione");
+                                String stringaDurata="DURATA: " + jsonObject.getString("durata") + " minuti";
+                                films.add(new CardItems(stringaTitolo,stringaDescrizione,stringaDurata));
+                                Log.d("MIAO",stringaTitolo);
+                            }
+
+                            // on below line we are displaying
+                            // a success toast message.
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        i++;
+                    Log.d("MIAO","FINITO CICLO: "+ i + " MASSIMO: "+length);
+                    }while(i<length);
+                setAdapter(films);
             }
         }, new com.android.volley.Response.ErrorListener() {
             @Override
@@ -136,5 +191,6 @@ public class MainActivity extends AppCompatActivity {
         // below line is to make
         // a json object request.
         queue.add(request);
+        Log.d("MIAO","RICHIESTA INVIATA");
     }
 }
