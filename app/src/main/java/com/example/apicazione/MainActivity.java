@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 // calling method to load data.
-                getCourseDetails(courseIDEdt.getText().toString());
+                //getCourseDetails(courseIDEdt.getText().toString());
+                omdapi(courseIDEdt.getText().toString().replace(" ","+"));
             }
         });
     }
@@ -86,11 +87,107 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void omdapi(String req){
+        String api="3df18acb";
+        String url = "http://www.omdbapi.com/?apikey="+api+"&t="+req;
+
+
+        // creating a new variable for our request queue
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        // on below line we are calling a string
+        // request method to post the data to our API
+        // in this we are calling a post method.
+        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                films = new ArrayList<CardItems>();
+                JSONObject fulljsonObject = null;
+
+
+
+
+
+                try {
+                    //jsonObject= arr.getJSONObject(i);
+
+                    fulljsonObject = new JSONObject(response);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                    Log.d("MIAO","ENTRATO DO WHILE ON RESPONSE");
+                    try {
+                        Log.d("MIAO","ENTRATO TRY");
+
+
+
+
+                        // on below line we are checking if the response is null or not.
+                        if (fulljsonObject.getString("Title") == "null") {
+                            Log.d("MIAO","STRINGA TITOLO NULL");
+                            // displaying a toast message if we get error
+                        } else {
+
+                            // if we get the data then we are setting it in our text views in below line.
+                            Log.d("MIAO", "PRENDENDO DATI");
+                            String stringaTitolo = "TITOLO: " + fulljsonObject.getString("Title");
+                            String stringaDescrizione ="DESCRIZIONE: " + fulljsonObject.getString("Plot");
+                            String stringaDurata="DURATA: " + fulljsonObject.getString("Runtime") + " minuti";
+                            films.add(new CardItems(stringaTitolo,stringaDescrizione,stringaDurata));
+                            Log.d("MIAO","TITOLO:"+stringaTitolo);
+                        }
+
+                        // on below line we are displaying
+                        // a success toast message.
+
+
+                    } catch (JSONException e) {
+                        Log.d("MIAO","JSON EXEPCION"+e);
+                        e.printStackTrace();
+                    }
+
+                setAdapter(films);
+            }
+        }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // method to handle errors.
+                Toast.makeText(MainActivity.this, "Fail to get course" + error, Toast.LENGTH_SHORT).show();
+            }
+        }) {
+            @Override
+            public String getBodyContentType() {
+                // as we are passing data in the form of url encoded
+                // so we are passing the content type below
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+
+                // below line we are creating a map for storing our values in key and value pair.
+                Map<String, String> params = new HashMap<String, String>();
+
+                // on below line we are passing our key and value pair to our parameters.
+
+                // at last we are returning our params.
+                return params;
+            }
+        };
+        // below line is to make
+        // a json object request.
+        queue.add(request);
+        Log.d("MIAO","RICHIESTA INVIATA");
+    }
+
+
+
     private void getCourseDetails(String titoloReq) {
         Log.d("MIAO","COURSE DETAILS");
+
         InetAddress ip = null;
         try {
-            ip = Inet4Address.getByName("192.168.0.153");
+            ip = Inet4Address.getByName("192.168.43.178");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -99,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
 
         // creating a new variable for our request queue
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-
         // on below line we are calling a string
         // request method to post the data to our API
         // in this we are calling a post method.
@@ -193,4 +289,7 @@ public class MainActivity extends AppCompatActivity {
         queue.add(request);
         Log.d("MIAO","RICHIESTA INVIATA");
     }
+
+
+
 }
